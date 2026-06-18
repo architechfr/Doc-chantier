@@ -5,7 +5,7 @@ import type { AnalyseResult } from "@/types/document";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-/** Réponse fictive renvoyée en mode démo (OPENAI_API_KEY absent). */
+/** Réponse fictive renvoyée en mode démo (MISTRAL_API_KEY absent). */
 function demoResult(filename?: string): AnalyseResult {
   return {
     document_detected: true,
@@ -21,12 +21,12 @@ function demoResult(filename?: string): AnalyseResult {
     missing_documents: [],
     detected_requirements: [],
     alerts: [
-      "Mode démo : OPENAI_API_KEY non configuré, ce résultat est fictif.",
+      "Mode démo : MISTRAL_API_KEY non configuré, ce résultat est fictif.",
     ],
     online_check_required: true,
-    summary: `Analyse simulée pour ${filename ?? "le document"}. Configurez OPENAI_API_KEY pour une analyse réelle.`,
+    summary: `Analyse simulée pour ${filename ?? "le document"}. Configurez MISTRAL_API_KEY pour une analyse réelle.`,
     recommended_action:
-      "Renseigner OPENAI_API_KEY dans .env.local pour activer l'analyse IA.",
+      "Renseigner MISTRAL_API_KEY dans .env.local pour activer l'analyse IA.",
   };
 }
 

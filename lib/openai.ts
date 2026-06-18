@@ -50,21 +50,32 @@ Tu dois produire UNIQUEMENT une réponse JSON stricte, sans texte avant ou aprè
 
 Ne jamais inventer une date ou un organisme. Si une information est illisible, écrire null. Les dates au format ISO AAAA-MM-JJ. Si le document est une liste de pièces à fournir, document_category = LISTE_PIECES et extraire tous les documents demandés dans missing_documents.`;
 
+// On utilise le SDK OpenAI pointé vers l'API Mistral (compatible OpenAI),
+// avec le modèle de vision Pixtral. Clé : MISTRAL_API_KEY (palier gratuit).
+const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
+
 let cachedClient: OpenAI | null = null;
 
 export function getOpenAI(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.MISTRAL_API_KEY;
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY manquant : analyse IA indisponible.");
+    throw new Error("MISTRAL_API_KEY manquant : analyse IA indisponible.");
   }
   if (!cachedClient) {
-    cachedClient = new OpenAI({ apiKey });
+    cachedClient = new OpenAI({ apiKey, baseURL: MISTRAL_BASE_URL });
   }
   return cachedClient;
 }
 
 export function isOpenAIConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY);
+  return Boolean(process.env.MISTRAL_API_KEY);
+}
+
+/** Extrait le bloc JSON d'une réponse (robuste si le modèle ajoute du texte autour). */
+function extractJson(raw: string): string {
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  return start >= 0 && end > start ? raw.slice(start, end + 1) : "{}";
 }
 
 /**
@@ -75,12 +86,11 @@ export async function analyseDocumentImage(
   dataUrl: string,
 ): Promise<AnalyseResult> {
   const client = getOpenAI();
-  const model = process.env.OPENAI_VISION_MODEL ?? "gpt-4o";
+  const model = process.env.MISTRAL_VISION_MODEL ?? "pixtral-12b-2409";
 
   const completion = await client.chat.completions.create({
     model,
     temperature: 0,
-    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: ANALYSE_SYSTEM_PROMPT },
       {
@@ -97,5 +107,5 @@ export async function analyseDocumentImage(
   });
 
   const raw = completion.choices[0]?.message?.content ?? "{}";
-  return JSON.parse(raw) as AnalyseResult;
+  return JSON.parse(extractJson(typeof raw === "string" ? raw : "{}")) as AnalyseResult;
 }

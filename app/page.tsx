@@ -42,7 +42,7 @@ export default function HomePage() {
           </li>
           <li className="flex items-center gap-2">
             <Dot ok={openaiOk} />
-            Analyse IA {openaiOk ? "active" : "désactivée — définir OPENAI_API_KEY"}
+            Analyse IA {openaiOk ? "active (Mistral)" : "désactivée — définir MISTRAL_API_KEY"}
           </li>
         </ul>
         <p className="mt-3 text-xs text-slate-500">
