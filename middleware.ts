@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 /**
  * Barrière d'accès DocChantier.
@@ -18,6 +18,12 @@ const ALLOWED_EMAILS = (
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
 
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: CookieOptions;
+};
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -26,6 +32,7 @@ export async function middleware(req: NextRequest) {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
   // Si Supabase n'est pas configuré (mode démo), on ne bloque pas.
   if (!url || !anon) return NextResponse.next();
 
@@ -36,12 +43,16 @@ export async function middleware(req: NextRequest) {
       getAll() {
         return req.cookies.getAll();
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+      setAll(cookiesToSet: CookieToSet[]) {
+        cookiesToSet.forEach(({ name, value }) => {
+          req.cookies.set(name, value);
+        });
+
         res = NextResponse.next({ request: req });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          res.cookies.set(name, value, options),
-        );
+
+        cookiesToSet.forEach(({ name, value, options }) => {
+          res.cookies.set(name, value, options);
+        });
       },
     },
   });
@@ -58,14 +69,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Connecté mais e-mail non autorisé → refus (et retour au login avec message).
+  // Connecté mais e-mail non autorisé → refus.
   const email = (user.email ?? "").toLowerCase();
+
   if (!ALLOWED_EMAILS.includes(email)) {
     loginUrl.searchParams.set("denied", "1");
     return NextResponse.redirect(loginUrl);
   }
 
-  // Autorisé → on continue (en conservant les cookies de session rafraîchis).
+  // Autorisé → on continue en conservant les cookies de session rafraîchis.
   return res;
 }
 
