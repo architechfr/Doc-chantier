@@ -20,7 +20,7 @@ export async function getChantiers(): Promise<Chantier[]> {
   if (!isSupabaseConfigured()) return DEMO_CHANTIERS;
   const sb = createServiceClient();
   const { data, error } = await sb
-    .from("chantiers")
+    .from("dc_chantiers")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -32,7 +32,7 @@ export async function getChantier(id: string): Promise<Chantier | null> {
     return DEMO_CHANTIERS.find((c) => c.id === id) ?? null;
   }
   const sb = createServiceClient();
-  const { data } = await sb.from("chantiers").select("*").eq("id", id).single();
+  const { data } = await sb.from("dc_chantiers").select("*").eq("id", id).single();
   return (data as Chantier) ?? null;
 }
 
@@ -42,7 +42,7 @@ export async function getEntreprise(id: string): Promise<Entreprise | null> {
   }
   const sb = createServiceClient();
   const { data } = await sb
-    .from("entreprises")
+    .from("dc_entreprises")
     .select("*")
     .eq("id", id)
     .single();
@@ -53,7 +53,7 @@ export async function getEntreprises(): Promise<Entreprise[]> {
   if (!isSupabaseConfigured()) return DEMO_ENTREPRISES;
   const sb = createServiceClient();
   const { data, error } = await sb
-    .from("entreprises")
+    .from("dc_entreprises")
     .select("*")
     .order("name");
   if (error) throw error;
@@ -99,9 +99,9 @@ export async function getDocuments(filter?: {
 
   const sb = createServiceClient();
   let query = sb
-    .from("documents")
+    .from("dc_documents")
     .select(
-      "id, issuer, issue_date, expiry_date, file_url, status, document_types(code, name, online_check_available)",
+      "id, issuer, issue_date, expiry_date, file_url, status, document_types:dc_document_types(code, name, online_check_available)",
     );
 
   if (filter?.entrepriseId) query = query.eq("entreprise_id", filter.entrepriseId);
